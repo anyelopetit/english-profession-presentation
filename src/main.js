@@ -6,9 +6,10 @@ import 'reveal.js/dist/reveal.css'
 
 gsap.registerPlugin(Flip)
 
+const photo = name => import.meta.env.BASE_URL + 'photos/' + name
 const scenes = [
- ['01 / 15 · THE SPARK','My profession','Software Developer','From ideas to useful digital experiences.','hero','/photos/portrait-car.png'],
- ['02 / 15 · WHO I AM','People first, technology second','','Curiosity helps me keep learning and building.','memories','/photos/travel-house.png','/photos/ski.png'],
+ ['01 / 15 · THE SPARK','My profession','Software Developer','From ideas to useful digital experiences.','hero',photo('portrait-car.png')],
+ ['02 / 15 · WHO I AM','People first, technology second','','Curiosity helps me keep learning and building.','memories',photo('travel-house.png'),photo('ski.png')],
  ['03 / 15 · EVERYDAY LIFE','Software is everywhere','','We use software to buy, talk, travel, and work.','everywhere'],
  ['04 / 15 · THE DIGITAL ARCHITECT','I build digital spaces','','I turn an idea into something people can use.','architect'],
  ['05 / 15 · THE METHOD','From problem to solution','','Understand. Design. Build. Improve.','method'],
