@@ -1,109 +1,188 @@
+import 'reveal.js/dist/reveal.css'
 import './style.css'
 import { gsap } from 'gsap'
-import { Flip } from 'gsap/Flip'
 import Reveal from 'reveal.js'
-import 'reveal.js/dist/reveal.css'
+import { scenes, backgrounds } from './scenes.js'
+import { createSpark } from './spark.js'
 
-gsap.registerPlugin(Flip)
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+const pad = n => String(n).padStart(2, '0')
 
-const photo = name => import.meta.env.BASE_URL + 'photos/' + name
-const scenes = [
- ['01 / 15 · THE SPARK','My profession','Software Developer','From ideas to useful digital experiences.','hero',photo('portrait-car.png')],
- ['02 / 15 · WHO I AM','People first, technology second','','Curiosity helps me keep learning and building.','memories',photo('travel-house.png'),photo('ski.png')],
- ['03 / 15 · EVERYDAY LIFE','Software is everywhere','','We use software to buy, talk, travel, and work.','everywhere'],
- ['04 / 15 · THE DIGITAL ARCHITECT','I build digital spaces','','I turn an idea into something people can use.','architect'],
- ['05 / 15 · THE METHOD','From problem to solution','','Understand. Design. Build. Improve.','method'],
- ['06 / 15 · A VISITOR','Imagine an online store','','A visitor has a question before buying.','visitor'],
- ['07 / 15 · HELLOTEXT','The right message','','Useful conversations help stores support visitors.','hellotext'],
- ['08 / 15 · TIMING','The right moment','','A clear message should arrive when it can help.','timing'],
- ['09 / 15 · MY ROLE','Building with a team','','Design, product, and engineering solve problems together.','team'],
- ['10 / 15 · THE BRIDGE','Technology connects people','','Good tools make communication easier.','bridge'],
- ['11 / 15 · RANKMI','A company is a network','','People need information, feedback, goals, and support.','network'],
- ['12 / 15 · RANKMI','Technology helps people grow','','One place can make work experiences clearer.','rankmi'],
- ['13 / 15 · PROGRESS','A better conversation','','Feedback and goals help people understand their progress.','progress'],
- ['14 / 15 · WHY IT MATTERS','Code has a human purpose','','I make difficult tasks simpler for real people.','purpose'],
- ['15 / 15 · THE RETURNING SPARK','Ideas become experiences','','Thank you.','ending'],
-]
+const background = theme =>
+  theme === 'dark' ? `data-background-gradient="${backgrounds.dark}"` : `data-background-color="${backgrounds[theme]}"`
 
-const app = document.querySelector('#app')
-app.innerHTML = '<main class="stage"><div class="grain"></div><div class="topbar"><span class="brand">ANYELO PETIT</span><span class="status" id="status">READY</span></div><div class="reveal"><div class="slides" id="slides"></div></div><aside class="notes-panel" id="notesPanel" aria-live="polite"><span class="notes-label">SPEAKER NOTES</span><p></p></aside><footer class="controls"><span id="counter"></span><span class="hint">Use ← → or click · <span id="lockHint">scene loading</span></span><button id="speaker" aria-expanded="false">notes</button></footer></main>'
-const uiStyle = document.createElement('style')
-uiStyle.textContent = '.notes-panel{position:fixed;right:5vw;bottom:70px;z-index:20;width:min(360px,calc(100vw - 40px));padding:18px 20px;border:1px solid #31568e;border-radius:18px;background:#06132deF;box-shadow:0 20px 60px #02081799;opacity:0;transform:translateY(14px);pointer-events:none;transition:opacity .25s ease,transform .25s ease}.notes-label{display:block;color:#55e1c4;font:11px "DM Mono",monospace;letter-spacing:.14em}.notes-panel p{margin:9px 0 0;color:#d5e1f6;font:14px/1.5 "DM Mono",monospace}.show-notes .notes-panel{opacity:1;transform:none;pointer-events:auto}.reveal{height:calc(100svh - 125px)!important;width:100%!important}.reveal .slides{left:0!important;top:0!important;transform:none!important;width:100%!important;height:100%!important}.reveal section{left:0!important;top:0!important}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}'
-document.head.appendChild(uiStyle)
-const slidesEl = document.querySelector('#slides'), statusEl = document.querySelector('#status'), counterEl = document.querySelector('#counter'), lockHint = document.querySelector('#lockHint')
-let index = 0, locked = true, activeTimeline
-const spark = '<div class="spark shared" data-id="spark" data-flip-id="spark">✦</div>'
-const notes = {
- hero: 'Introduce yourself and explain that a small idea can become a useful digital experience.',
- memories: 'Mention that curiosity and learning are part of your professional life.',
- everywhere: 'Ask the class for one example of software they used today.',
- architect: 'Compare a software developer with an architect who designs spaces for people.',
- method: 'Explain the four words with one simple project example.',
- visitor: 'Describe a visitor who needs help before buying something online.',
- hellotext: 'Explain that Hellotext helps stores start useful conversations with visitors.',
- timing: 'Emphasize that a helpful message must arrive at the right moment.',
- team: 'Explain how design, product, and engineering collaborate.',
- bridge: 'Connect the message with the human goal: clearer communication.',
- network: 'Introduce a company as a group of connected people and information.',
- rankmi: 'Explain that Rankmi connects HR processes and helps people grow at work.',
- progress: 'Give an example of feedback, goals, and progress working together.',
- purpose: 'Make the key point: code matters because it simplifies real tasks.',
- ending: 'Return to the opening idea and thank the class for listening.'
+const sectionMarkup = scene => `
+  <section data-scene="${scene.id}" data-theme="${scene.theme}" ${background(scene.theme)}>
+    <div class="scene scene--${scene.id}">
+      <div class="copy">
+        <p class="kicker">${scene.kicker}</p>
+        <h1>${scene.title}</h1>
+        ${scene.role ? `<p class="role">${scene.role}</p>` : ''}
+        <p class="body">${scene.body}</p>
+      </div>
+      <div class="visual visual--${scene.id}">${scene.visual()}</div>
+    </div>
+    <aside class="notes">${scene.notes}</aside>
+  </section>`
+
+document.querySelector('#app').innerHTML = `
+  <header class="chrome">
+    <span class="brand">Anyelo Petit</span>
+    <span class="status" id="status" role="status">PLAYING</span>
+    <span class="counter" id="counter">01 / ${pad(scenes.length)}</span>
+    <button class="notes-toggle" id="notesToggle" type="button" aria-expanded="false" aria-controls="notesPanel">notes</button>
+  </header>
+  <div class="reveal"><div class="slides">${scenes.map(sectionMarkup).join('')}</div></div>
+  <aside class="notes-panel" id="notesPanel" aria-hidden="true">
+    <span class="notes-label">Speaker notes</span>
+    <p aria-live="polite"></p>
+  </aside>`
+
+const revealEl = document.querySelector('.reveal')
+const statusEl = document.querySelector('#status')
+const counterEl = document.querySelector('#counter')
+const notesToggle = document.querySelector('#notesToggle')
+const notesPanel = document.querySelector('#notesPanel')
+const notesText = notesPanel.querySelector('p')
+
+const deck = new Reveal(revealEl, {
+  width: 1920,
+  height: 1080,
+  margin: 0,
+  minScale: 0.05,
+  maxScale: 3,
+  center: false,
+  controls: false,
+  progress: false,
+  slideNumber: false,
+  hash: true,
+  overview: true,
+  keyboard: false,
+  touch: false,
+  help: false,
+  scrollActivationWidth: null,
+  // GSAP owns every movement; Reveal only handles layout, hash, and overview.
+  transition: 'none',
+  backgroundTransition: 'fade',
+})
+
+let spark
+let locked = true
+let activeTimeline
+
+function setStatus(status) {
+  statusEl.textContent = status
+  document.body.dataset.status = status.toLowerCase()
 }
-const icon = (text, name) => '<span class="icon icon-' + name + '">' + text + '</span>'
 
-function visual(scene) {
- const kind = scene[4]
- if (kind === 'hero') return '<div class="hero-visual"><div class="arch"></div><img class="portrait" src="' + scene[5] + '" alt="Anyelo standing outdoors">' + spark + '</div>'
- if (kind === 'memories') return '<div class="memories-visual"><div class="route shared" data-id="spark" data-flip-id="spark"></div><img class="memory memory-one" src="' + scene[5] + '" alt="Anyelo travelling"><img class="memory memory-two" src="' + scene[6] + '" alt="Anyelo skiing"><span class="stamp">MEMORIES / 02</span></div>'
- if (kind === 'everywhere') return '<div class="orbit-visual"><div class="orbit-ring"></div>' + icon('⌁','phone') + icon('⌖','map') + icon('✦','chat') + icon('□','shop') + spark + '</div>'
- if (kind === 'architect') return '<div class="blueprint-visual"><div class="blueprint-grid"></div><div class="blueprint-card">' + icon('◇','design') + '<span>an idea</span></div>' + spark + '</div>'
- if (kind === 'method') return '<div class="steps-visual">' + ['question','sketch','build','improve'].map((x, i) => '<div class="step"><b>0' + (i + 1) + '</b><span>' + x + '</span></div>').join('') + spark + '</div>'
- if (kind === 'visitor') return '<div class="store-visual"><div class="store-window"><span class="window-dot"></span><span class="window-dot"></span><span class="window-dot"></span><div class="product-block"></div><div class="empty-bubble">?</div></div>' + spark + '</div>'
- if (kind === 'hellotext') return '<div class="chat-visual"><div class="bubble coral">Hello! Can I help you?</div><div class="bubble blue shared" data-id="spark" data-flip-id="spark">✦</div><div class="bot">◡</div></div>'
- if (kind === 'timing') return '<div class="timing-visual"><div class="timeline-line"></div>' + ['visit','question','message','action'].map((x, i) => '<div class="moment"><b>' + (i + 1) + '</b><span>' + x + '</span></div>').join('') + spark + '</div>'
- if (kind === 'team') return '<div class="team-visual">' + ['design','product','engineering'].map(x => '<div class="team-node">' + icon('●',x) + '<span>' + x + '</span></div>').join('') + '<div class="team-core shared" data-id="spark" data-flip-id="spark">✦</div></div>'
- if (kind === 'bridge') return '<div class="bridge-visual"><div class="person-dot"></div><div class="bridge-line shared" data-id="spark" data-flip-id="spark"></div><div class="person-dot"></div><div class="bridge-label">conversation</div></div>'
- if (kind === 'network') return '<div class="network-visual"><div class="nodes">' + Array.from({length:6}, (_,i) => '<i style="--i:' + i + '">●</i>').join('') + '</div>' + spark + '</div>'
- if (kind === 'rankmi') return '<div class="rankmi-visual"><div class="growth-line"></div><div class="rankmi-panel"><span>people</span><strong>connected</strong><small>feedback · goals · growth</small></div>' + spark + '</div>'
- if (kind === 'progress') return '<div class="progress-visual"><div class="progress-card">feedback</div><div class="progress-card">goals</div><div class="progress-card">progress</div>' + spark + '</div>'
- if (kind === 'purpose') return '<div class="purpose-visual"><div class="complex">complex</div><div class="purpose-arrow">→</div><div class="clear">clear</div>' + spark + '</div>'
- return '<div class="ending-visual"><div class="final-spark shared" data-id="spark">✦</div><div class="orbit-ring"></div></div>'
+function unlock() {
+  locked = false
+  setStatus('READY')
 }
 
-function markup(scene) {
- return '<div class="copy"><p class="kicker">' + scene[0] + '</p><h1>' + scene[1] + '</h1>' + (scene[2] ? '<p class="role">' + scene[2] + '</p>' : '') + '<p class="body">' + scene[3] + '</p><div class="speaker-note">' + notes[scene[4]] + '</div></div><div class="visual visual-' + scene[4] + '">' + visual(scene) + '</div><aside class="notes">' + notes[scene[4]] + '</aside>'
+function render(section) {
+  const index = deck.getIndices(section).h
+  counterEl.textContent = `${pad(index + 1)} / ${pad(scenes.length)}`
+  notesText.textContent = scenes[index].notes
+  document.body.dataset.theme = section.dataset.theme
 }
-slidesEl.innerHTML = scenes.map((scene, i) => '<section data-auto-animate data-auto-animate-duration="0.8" data-auto-animate-easing="power2.inOut" data-scene="' + scene[4] + '" data-background-color="' + (i >= 10 ? '#edf5ff' : i >= 6 ? '#fff4ee' : '#07142e') + '">' + markup(scene) + '</section>').join('')
-const notesPanel = document.querySelector('#notesPanel p')
-function render() { counterEl.textContent = String(index + 1).padStart(2, '0') + ' / 15'; notesPanel.textContent = notes[scenes[index][4]] }
-let pendingFlipState = null
-function playIntro() {
- activeTimeline?.kill(); locked = true; statusEl.textContent = 'PLAYING'; lockHint.textContent = 'animation in progress'
- const root = deck.getCurrentSlide()
- const flipState = pendingFlipState; pendingFlipState = null
- activeTimeline = gsap.timeline({defaults:{ease:'power3.out'},onComplete:()=>{locked=false;statusEl.textContent='READY';lockHint.textContent='ready for next slide'}})
-  .from(root.querySelectorAll('.copy > *'),{autoAlpha:0,y:24,duration:.55,stagger:.08}).from(root.querySelector('.visual'),{autoAlpha:0,scale:.94,duration:.7},'<.2')
- if (flipState) {
-   const target = root.querySelector('[data-flip-id="spark"]')
-   if (target) { gsap.set(target, {autoAlpha: 0}); Flip.from(flipState, {targets: target, duration: .8, ease: 'power3.inOut', absolute: true, onComplete: () => gsap.set(target, {clearProps: 'transform,opacity,visibility'})}) }
- } else activeTimeline.from(root.querySelectorAll('.shared'),{scale:.2,rotation:-30,autoAlpha:0,duration:.75,ease:'back.out(1.8)'},'<.25')
- if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) activeTimeline.progress(1)
+
+const copyItems = section => section.querySelectorAll('.copy > *')
+const visualItems = section => section.querySelectorAll('.visual, .visual .vi')
+
+function enterScene(section, { flip }) {
+  activeTimeline?.kill()
+  render(section)
+  // A scene may have been left mid-animation; start its entrance from a clean state.
+  gsap.set([...copyItems(section), ...visualItems(section)], { clearProps: 'opacity,visibility,transform' })
+
+  if (deck.isOverview()) {
+    spark.hide()
+    unlock()
+    return
+  }
+
+  locked = true
+  setStatus('PLAYING')
+  const anchor = section.querySelector('.spark-anchor')
+  const timeline = gsap.timeline({ defaults: { ease: 'power3.out' }, onComplete: unlock })
+
+  if (!anchor) spark.hide()
+  else if (flip && spark.visible) timeline.add(spark.flipTo(anchor), 0)
+  else timeline.add(spark.appearAt(anchor), 0.45)
+
+  timeline
+    .from(copyItems(section), { autoAlpha: 0, y: 32, duration: 0.6, stagger: 0.08 }, 0.15)
+    .from(section.querySelector('.visual'), { autoAlpha: 0, duration: 0.5 }, 0.2)
+    .from(section.querySelectorAll('.visual .vi'), { autoAlpha: 0, y: 24, duration: 0.6, stagger: 0.06 }, 0.3)
+
+  activeTimeline = timeline
+  if (reducedMotion.matches) timeline.progress(1)
 }
+
 function go(direction) {
- if (locked) return
- const next = index + direction; if (next < 0 || next >= scenes.length) return
- locked = true; statusEl.textContent = 'TRANSITION'; lockHint.textContent = 'transition in progress'
- const root = deck.getCurrentSlide()
- const shared = root.querySelector('[data-flip-id="spark"]')
- pendingFlipState = shared ? Flip.getState(shared) : null
- gsap.timeline({onComplete:()=>deck[direction > 0 ? 'next' : 'prev']()})
-  .to(root.querySelectorAll('.copy > *, .visual > *:not(.shared)'),{autoAlpha:0,y:direction>0?-18:18,duration:.42,stagger:.025})
-  .to(root.querySelectorAll('.shared'),{autoAlpha:0,duration:.3,ease:'power2.inOut'},'<.1')
+  if (deck.isOverview()) {
+    direction > 0 ? deck.next() : deck.prev()
+    return
+  }
+  if (locked) return
+
+  const target = deck.getIndices().h + direction
+  if (target < 0 || target >= scenes.length) return
+
+  locked = true
+  setStatus('TRANSITION')
+  const current = deck.getCurrentSlide()
+
+  // Exits are shorter than entrances. The spark stays visible and morphs on the next scene.
+  activeTimeline = gsap.timeline({ defaults: { ease: 'power2.in' }, onComplete: () => deck.slide(target) })
+    .to(copyItems(current), { autoAlpha: 0, y: -20 * direction, duration: 0.3, stagger: 0.03 }, 0)
+    .to(current.querySelectorAll('.visual .vi'), { autoAlpha: 0, y: -16 * direction, duration: 0.3, stagger: 0.02 }, 0)
+    .to(current.querySelector('.visual'), { autoAlpha: 0, duration: 0.3 }, 0.1)
+
+  if (reducedMotion.matches) activeTimeline.progress(1)
 }
-const deck = new Reveal(document.querySelector('.reveal'), { controls:false, progress:false, slideNumber:false, hash:true, overview:true, keyboard:false, touch:false, transition:'fade', backgroundTransition:'fade', center:true, embedded:false, width:'100%', height:'100%', margin:0, minScale:0.2, maxScale:1.4 })
-deck.initialize().then(() => { index = deck.getIndices().h; render(); playIntro() })
-deck.on('slidechanged', e => { index = e.indexh; render(); playIntro() })
-window.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1) } if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1) } if (e.key === 'o' || e.key === 'O') deck.toggleOverview(); if (e.key === 'n' || e.key === 'N') document.querySelector('#speaker').click() })
-document.querySelector('.reveal').addEventListener('click', () => go(1))
-document.querySelector('#speaker').addEventListener('click', e => { const open = document.body.classList.toggle('show-notes'); e.currentTarget.setAttribute('aria-expanded', String(open)) })
+
+function toggleNotes() {
+  const open = document.body.classList.toggle('show-notes')
+  notesToggle.setAttribute('aria-expanded', String(open))
+  notesPanel.setAttribute('aria-hidden', String(!open))
+}
+
+// Handle for checking scene state from the browser console during development.
+if (import.meta.env.DEV) window.presentation = { deck, gsap }
+
+deck.initialize().then(() => {
+  spark = createSpark(revealEl.querySelector('.slides'))
+  enterScene(deck.getCurrentSlide(), { flip: false })
+
+  deck.on('slidechanged', event => enterScene(event.currentSlide, { flip: true }))
+  deck.on('overviewshown', () => enterScene(deck.getCurrentSlide(), { flip: false }))
+  deck.on('overviewhidden', () => enterScene(deck.getCurrentSlide(), { flip: false }))
+})
+
+window.addEventListener('keydown', event => {
+  if (event.metaKey || event.ctrlKey || event.altKey || !spark) return
+  const key = event.key
+  if (key === 'ArrowRight' || key === ' ' || key === 'PageDown') {
+    event.preventDefault()
+    go(1)
+  } else if (key === 'ArrowLeft' || key === 'PageUp') {
+    event.preventDefault()
+    go(-1)
+  } else if (key === 'o' || key === 'O') {
+    deck.toggleOverview()
+  } else if (key === 'Escape' && deck.isOverview()) {
+    deck.toggleOverview(false)
+  } else if (key === 'n' || key === 'N') {
+    toggleNotes()
+  }
+})
+
+// Clicking a slide in overview selects it; it must not also advance the story.
+let pointerStartedInOverview = false
+revealEl.addEventListener('pointerdown', () => { pointerStartedInOverview = deck.isOverview() }, true)
+revealEl.addEventListener('click', () => {
+  if (spark && !pointerStartedInOverview && !deck.isOverview()) go(1)
+})
+notesToggle.addEventListener('click', toggleNotes)
