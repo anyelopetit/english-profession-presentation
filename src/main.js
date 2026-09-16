@@ -1,5 +1,7 @@
 import './style.css'
 import { gsap } from 'gsap'
+import Reveal from 'reveal.js'
+import 'reveal.js/dist/reveal.css'
 
 const scenes = [
  ['01 / 15 · THE SPARK','My profession','Software Developer','From ideas to useful digital experiences.','hero','/photos/portrait-car.png'],
@@ -20,8 +22,8 @@ const scenes = [
 ]
 
 const app = document.querySelector('#app')
-app.innerHTML = '<main class="stage"><div class="grain"></div><div class="topbar"><span class="brand">ANYELO PETIT</span><span class="status" id="status">READY</span></div><section class="scene" id="scene"></section><footer class="controls"><span id="counter"></span><span class="hint">Use ← → or click · <span id="lockHint">scene loading</span></span><button id="speaker">notes</button></footer></main>'
-const sceneEl = document.querySelector('#scene'), statusEl = document.querySelector('#status'), counterEl = document.querySelector('#counter'), lockHint = document.querySelector('#lockHint')
+app.innerHTML = '<main class="stage"><div class="grain"></div><div class="topbar"><span class="brand">ANYELO PETIT</span><span class="status" id="status">READY</span></div><div class="reveal"><div class="slides" id="slides"></div></div><footer class="controls"><span id="counter"></span><span class="hint">Use ← → or click · <span id="lockHint">scene loading</span></span><button id="speaker">notes</button></footer></main>'
+const slidesEl = document.querySelector('#slides'), statusEl = document.querySelector('#status'), counterEl = document.querySelector('#counter'), lockHint = document.querySelector('#lockHint')
 let index = 0, locked = true, activeTimeline
 const spark = '<div class="spark shared" data-shared="spark">✦</div>'
 const icon = (text, name) => '<span class="icon icon-' + name + '">' + text + '</span>'
@@ -45,26 +47,30 @@ function visual(scene) {
  return '<div class="ending-visual"><div class="final-spark shared" data-shared="spark">✦</div><div class="orbit-ring"></div></div>'
 }
 
-function render(scene) {
- sceneEl.innerHTML = '<div class="copy"><p class="kicker">' + scene[0] + '</p><h1>' + scene[1] + '</h1>' + (scene[2] ? '<p class="role">' + scene[2] + '</p>' : '') + '<p class="body">' + scene[3] + '</p><div class="speaker-note">Explain this idea with a simple example.</div></div><div class="visual visual-' + scene[4] + '">' + visual(scene) + '</div>'
- counterEl.textContent = String(index + 1).padStart(2, '0') + ' / 15'
+function markup(scene) {
+ return '<div class="copy"><p class="kicker">' + scene[0] + '</p><h1>' + scene[1] + '</h1>' + (scene[2] ? '<p class="role">' + scene[2] + '</p>' : '') + '<p class="body">' + scene[3] + '</p><div class="speaker-note">Explain this idea with a simple example.</div></div><div class="visual visual-' + scene[4] + '">' + visual(scene) + '</div><aside class="notes">' + scene[3] + ' Give one simple example from your work.</aside>'
 }
+slidesEl.innerHTML = scenes.map((scene, i) => '<section data-auto-animate data-scene="' + scene[4] + '">' + markup(scene) + '</section>').join('')
+function render() { counterEl.textContent = String(index + 1).padStart(2, '0') + ' / 15' }
 function playIntro() {
  activeTimeline?.kill(); locked = true; statusEl.textContent = 'PLAYING'; lockHint.textContent = 'animation in progress'
+ const root = deck.getCurrentSlide()
  activeTimeline = gsap.timeline({defaults:{ease:'power3.out'},onComplete:()=>{locked=false;statusEl.textContent='READY';lockHint.textContent='ready for next slide'}})
-  .from('.copy > *',{autoAlpha:0,y:24,duration:.55,stagger:.08}).from('.visual',{autoAlpha:0,scale:.94,duration:.7},'<.2').from('.shared',{scale:.2,rotation:-30,autoAlpha:0,duration:.75,ease:'back.out(1.8)'},'<.25')
+  .from(root.querySelectorAll('.copy > *'),{autoAlpha:0,y:24,duration:.55,stagger:.08}).from(root.querySelector('.visual'),{autoAlpha:0,scale:.94,duration:.7},'<.2').from(root.querySelectorAll('.shared'),{scale:.2,rotation:-30,autoAlpha:0,duration:.75,ease:'back.out(1.8)'},'<.25')
  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) activeTimeline.progress(1)
 }
 function go(direction) {
  if (locked) return
- const next = index + direction
- if (next < 0 || next >= scenes.length) return
+ const next = index + direction; if (next < 0 || next >= scenes.length) return
  locked = true; statusEl.textContent = 'TRANSITION'; lockHint.textContent = 'transition in progress'
- gsap.timeline({onComplete:()=>{index=next;render(scenes[index]);playIntro()}})
-  .to('.copy > *, .visual > *:not(.shared)',{autoAlpha:0,y:direction>0?-18:18,duration:.42,stagger:.025})
-  .to('.shared',{x:direction>0?90:-90,scale:1.15,duration:.55,ease:'power2.inOut'},'<.1')
+ const root = deck.getCurrentSlide()
+ gsap.timeline({onComplete:()=>deck[direction > 0 ? 'next' : 'prev']()})
+  .to(root.querySelectorAll('.copy > *, .visual > *:not(.shared)'),{autoAlpha:0,y:direction>0?-18:18,duration:.42,stagger:.025})
+  .to(root.querySelectorAll('.shared'),{x:direction>0?90:-90,scale:1.15,duration:.55,ease:'power2.inOut'},'<.1')
 }
-render(scenes[0]); playIntro()
-window.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1) } if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1) } })
-sceneEl.addEventListener('click', () => go(1))
+const deck = new Reveal(document.querySelector('.reveal'), { controls:false, progress:false, slideNumber:false, hash:true, overview:true, keyboard:false, touch:false, transition:'fade', backgroundTransition:'fade', center:true })
+deck.initialize().then(() => { index = deck.getIndices().h; render(); playIntro() })
+deck.on('slidechanged', e => { index = e.indexh; render(); playIntro() })
+window.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1) } if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1) } if (e.key === 'o' || e.key === 'O') deck.toggleOverview() })
+document.querySelector('.reveal').addEventListener('click', () => go(1))
 document.querySelector('#speaker').addEventListener('click', () => document.body.classList.toggle('show-notes'))
