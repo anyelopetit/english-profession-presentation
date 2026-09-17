@@ -1,6 +1,7 @@
 import 'reveal.js/dist/reveal.css'
 import './style.css'
 import { gsap } from 'gsap'
+import { Flip } from 'gsap/Flip'
 import Reveal from 'reveal.js'
 import { scenes, backgrounds } from './scenes.js'
 import { createSpark } from './spark.js'
@@ -18,6 +19,7 @@ const sectionMarkup = scene => `
         <h1>${scene.title}</h1>
         ${scene.role ? `<p class="role">${scene.role}</p>` : ''}
         <p class="body">${scene.body}</p>
+        ${scene.outro ? `<p class="outro">${scene.outro}</p>` : ''}
       </div>
       <div class="visual visual--${scene.id}">${scene.visual()}</div>
     </div>
@@ -68,6 +70,9 @@ const deck = new Reveal(revealEl, {
 let spark
 let locked = true
 let activeTimeline
+// Elements (other than the spark) that continue into the next scene, e.g. the portrait from 01 to 02.
+let pendingHandoff = null
+const HANDOFF_PROPS = 'borderTopLeftRadius,borderTopRightRadius,borderBottomLeftRadius,borderBottomRightRadius'
 
 function setStatus(status) {
   statusEl.textContent = status
@@ -86,11 +91,13 @@ function render(section) {
   document.body.dataset.act = section.dataset.act
 }
 
-// Only the scene on stage plays its product video; each visit starts from the beginning.
+// Only the scene on stage plays its product video, from the start of its story segment.
 function syncVideos(section) {
   for (const video of document.querySelectorAll('.reveal video')) {
     if (section.contains(video) && !deck.isOverview() && !reducedMotion.matches) {
-      video.currentTime = 0
+      const rewind = () => { video.currentTime = Number(video.dataset.start) || 0 }
+      if (video.readyState >= 1) rewind()
+      else video.addEventListener('loadedmetadata', rewind, { once: true })
       video.play().catch(() => {})
     } else {
       video.pause()
@@ -98,11 +105,22 @@ function syncVideos(section) {
   }
 }
 
+// Several scenes use different parts of the same clip, so each one loops only its segment.
+for (const video of document.querySelectorAll('.reveal video')) {
+  video.addEventListener('timeupdate', () => {
+    const end = Number(video.dataset.end)
+    if (end && video.currentTime >= end) video.currentTime = Number(video.dataset.start) || 0
+  })
+}
+
 const copyItems = section => section.querySelectorAll('.copy > *')
-const visualItems = section => section.querySelectorAll('.visual, .visual .vi')
+const visualItems = section => section.querySelectorAll('.visual, .visual .vi, .visual .anim')
+const layers = section => section.querySelectorAll('.visual .vi')
 
 function enterScene(section, { flip }) {
   activeTimeline?.kill()
+  const handoff = flip ? pendingHandoff : null
+  pendingHandoff = null
   render(section)
   syncVideos(section)
   // A scene may have been left mid-animation; start its entrance from a clean state.
@@ -123,10 +141,20 @@ function enterScene(section, { flip }) {
   else if (flip && spark.visible) timeline.add(spark.flipTo(anchor), 0)
   else timeline.add(spark.appearAt(anchor), 0.45)
 
-  timeline
-    .from(copyItems(section), { autoAlpha: 0, y: 32, duration: 0.6, stagger: 0.08 }, 0.15)
-    .from(section.querySelector('.visual'), { autoAlpha: 0, duration: 0.5 }, 0.2)
-    .from(section.querySelectorAll('.visual .vi'), { autoAlpha: 0, y: 24, duration: 0.6, stagger: 0.06 }, 0.3)
+  const continuing = handoff
+    ? [...section.querySelectorAll('[data-flip-id]')].filter(el => handoff.ids.includes(el.dataset.flipId))
+    : []
+  if (continuing.length) {
+    timeline.add(Flip.from(handoff.state, { targets: continuing, duration: 0.9, ease: 'power3.inOut', props: HANDOFF_PROPS }), 0)
+  }
+
+  timeline.from(copyItems(section), { autoAlpha: 0, y: 32, duration: 0.6, stagger: 0.08 }, 0.15)
+  // A card that holds a continuing element must stay visible, or the element would fade with it.
+  if (!continuing.length) timeline.from(section.querySelector('.visual'), { autoAlpha: 0, duration: 0.5 }, 0.2)
+  const entering = [...layers(section)].filter(el => !continuing.includes(el))
+  if (entering.length) timeline.from(entering, { autoAlpha: 0, y: 24, duration: 0.6, stagger: 0.06 }, 0.3)
+
+  scenes[deck.getIndices(section).h].enter?.(timeline, section)
 
   activeTimeline = timeline
   if (reducedMotion.matches) timeline.progress(1)
@@ -145,12 +173,23 @@ function go(direction) {
   locked = true
   setStatus('TRANSITION')
   const current = deck.getCurrentSlide()
+  const nextIds = [...deck.getSlide(target).querySelectorAll('[data-flip-id]')].map(el => el.dataset.flipId)
+  const continuing = [...current.querySelectorAll('[data-flip-id]')].filter(el => nextIds.includes(el.dataset.flipId))
+  const leaving = [...layers(current)].filter(el => !continuing.includes(el))
 
-  // Exits are shorter than entrances. The spark stays visible and morphs on the next scene.
-  activeTimeline = gsap.timeline({ defaults: { ease: 'power2.in' }, onComplete: () => deck.slide(target) })
+  // Exits are shorter than entrances. The spark and continuing elements stay visible and move on the next scene.
+  activeTimeline = gsap.timeline({
+    defaults: { ease: 'power2.in' },
+    onComplete: () => {
+      pendingHandoff = continuing.length
+        ? { state: Flip.getState(continuing, { props: HANDOFF_PROPS }), ids: continuing.map(el => el.dataset.flipId) }
+        : null
+      deck.slide(target)
+    },
+  })
     .to(copyItems(current), { autoAlpha: 0, y: -20 * direction, duration: 0.3, stagger: 0.03 }, 0)
-    .to(current.querySelectorAll('.visual .vi'), { autoAlpha: 0, y: -16 * direction, duration: 0.3, stagger: 0.02 }, 0)
-    .to(current.querySelector('.visual'), { autoAlpha: 0, duration: 0.3 }, 0.1)
+  if (leaving.length) activeTimeline.to(leaving, { autoAlpha: 0, y: -16 * direction, duration: 0.3, stagger: 0.02 }, 0)
+  if (!continuing.length) activeTimeline.to(current.querySelector('.visual'), { autoAlpha: 0, duration: 0.3 }, 0.1)
 
   if (reducedMotion.matches) activeTimeline.progress(1)
 }
