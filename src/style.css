@@ -547,6 +547,219 @@ section[data-act='rankmi'] {
   text-transform: uppercase;
 }
 
+/* ---------- 04 Hellotext: playbooks ---------- */
+
+.act-hellotext h1 em {
+  font-style: normal;
+  color: #e04a00; /* Hellotext orange, darkened to keep 3:1 on pink */
+}
+
+.ht-logo { left: 48px; top: 44px; height: 46px; }
+
+.pb-pill {
+  left: 700px;
+  top: 44px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: var(--ht-orange);
+  color: #ffffff;
+  font: 700 24px/1 var(--font-hellotext);
+  font-stretch: 125%;
+}
+
+/* Playbook "wheel": the band holds every playbook; the chosen one sits in the middle */
+.pb-band {
+  left: 320px;
+  top: 108px;
+  width: 260px;
+  height: 460px;
+  border-radius: 130px;
+  background: rgba(216, 196, 255, 0.7);
+}
+
+.pb-list {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pb-option {
+  position: absolute;
+  left: 336px;
+  width: 228px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.55);
+  color: #6f6190;
+  font: 600 20px/1.05 var(--font-sans);
+}
+
+.pb-option .icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ht-purple);
+}
+
+.pb-node {
+  position: absolute;
+  top: 285px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 18px;
+  border-radius: 28px;
+  background: #ffffff;
+  color: var(--ht-ink);
+  box-shadow: 0 20px 44px rgba(85, 10, 171, 0.16);
+}
+
+.pb-node--shopper { left: 24px; width: 242px; gap: 12px; padding: 0 14px; }
+.pb-node--shopper img { width: 76px; height: 76px; border-radius: 50%; background: var(--ht-lilac); }
+.pb-node--shopper p { display: grid; gap: 6px; margin: 0; }
+.pb-node--shopper b { font-size: 30px; }
+.pb-node--shopper span { color: #5b4a7d; font-size: 20px; font-weight: 600; white-space: nowrap; }
+
+.pb-node--playbook { left: 330px; width: 242px; }
+/* The spark lands here: the AI is what notices the abandoned cart */
+.pb-node--playbook i { flex: none; width: 64px; height: 64px; }
+.pb-node--playbook b { font: 700 26px/1.05 var(--font-hellotext); font-stretch: 112%; }
+
+.pb-arrows {
+  position: absolute;
+  inset: 0;
+  width: 900px;
+  height: 720px;
+  fill: none;
+  pointer-events: none;
+}
+
+.pb-arrows .draw {
+  stroke: var(--ht-purple);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.pb-message {
+  position: absolute;
+  left: 634px;
+  top: 190px;
+  width: 244px;
+  padding: 16px 18px 18px;
+  border-radius: 24px 24px 24px 8px;
+  background: #ffffff;
+  color: var(--ht-ink);
+  box-shadow: 0 20px 44px rgba(85, 10, 171, 0.16);
+}
+
+.pb-message__app {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #128c4a;
+  font: 700 18px/1 var(--font-sans);
+}
+
+.pb-message__app svg { width: 22px; height: 22px; }
+.pb-message p { margin: 10px 0 0; font: 600 21px/1.3 var(--font-sans); }
+
+.pb-product {
+  position: absolute;
+  left: 640px;
+  top: 440px;
+  width: 190px;
+  height: auto;
+}
+
+.pb-check {
+  position: absolute;
+  left: 818px;
+  top: 420px;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 5px solid #22c55e;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #16a34a;
+}
+
+.pb-check svg { width: 70%; height: 70%; stroke-width: 3; }
+
+.pb-spent {
+  position: absolute;
+  left: 666px;
+  top: 510px;
+  display: grid;
+  grid-template-columns: 44px auto;
+  column-gap: 12px;
+  align-items: center;
+  padding: 10px 18px 10px 10px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 16px 36px rgba(19, 4, 52, 0.12);
+}
+
+.pb-spent i {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--ht-mint);
+  color: #0b5d2a;
+  font: 800 24px/1 var(--font-sans);
+  font-style: normal;
+}
+
+.pb-spent small { color: #6f6190; font: 600 15px/1 var(--font-mono); text-transform: uppercase; }
+.pb-spent b { color: var(--ht-ink); font: 800 24px/1.1 var(--font-sans); }
+
+.clients-label {
+  left: 48px;
+  top: 590px;
+  margin: 0;
+  color: var(--ht-purple);
+  font: 700 24px/1 var(--font-hellotext);
+  font-stretch: 112%;
+}
+
+.clients {
+  left: 48px;
+  top: 628px;
+  width: 804px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.clients-track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  align-items: center;
+  animation: clients-marquee 30s linear infinite;
+}
+
+.clients-track img { height: 44px; width: auto; }
+
+@keyframes clients-marquee {
+  to { transform: translateX(-50%); }
+}
+
 /* ---------- 06 My work ---------- */
 
 .team-links path { stroke: var(--ht-lilac); stroke-width: 5; stroke-dasharray: 12 14; }
@@ -864,6 +1077,8 @@ section[data-act='rankmi'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .clients-track { animation: none; }
+
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;

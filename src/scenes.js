@@ -26,6 +26,11 @@ const icons = {
   sparkles: svg('<path d="M10 3.5l1.6 4.9 4.9 1.6-4.9 1.6L10 16.5l-1.6-4.9L3.5 10l4.9-1.6z"/><path d="M18 14l.8 2.2 2.2.8-2.2.8L18 20l-.8-2.2-2.2-.8 2.2-.8z"/>'),
   globe: svg('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5c2.4 2.4 3.5 5.2 3.5 8.5s-1.1 6.1-3.5 8.5c-2.4-2.4-3.5-5.2-3.5-8.5s1.1-6.1 3.5-8.5z"/>'),
   refresh: svg('<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4v4.5H15"/>'),
+  sun: svg('<circle cx="12" cy="13" r="4"/><path d="M12 4.5v2M5.5 7l1.4 1.4M18.5 7l-1.4 1.4M3.5 13h2M18.5 13h2M4 19.5h16"/>'),
+  eye: svg('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>'),
+  form: svg('<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M8.5 9h7M8.5 13h7M8.5 17h4"/>'),
+  flame: svg('<path d="M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-3.4 2.6-5.3 3.8-8.3 2.4 1.5 3.1 3.6 3.1 5.2 1-.8 1.6-2 1.7-3.3 2.4 1.8 4.4 4 4.4 6.9 0 3.3-2.7 5.7-6.5 5.7z"/>'),
+  whatsapp: svg('<path d="M4.5 19.5l1.2-3.9A8 8 0 1 1 8.6 18.5z"/><path d="M9.2 8.6c.3 2.8 2.4 5 5.3 5.6l1-1.3-1.8-.9-.8.8c-1-.4-1.8-1.3-2.2-2.3l.8-.8-.9-1.8z"/>'),
   users: svg('<circle cx="9" cy="8.5" r="3.3"/><path d="M3 19.5c.9-3.4 3.2-5 6-5s5.1 1.6 6 5"/><circle cx="17" cy="9.5" r="2.5"/><path d="M16.5 14.6c2.3.2 3.9 1.8 4.5 4.4"/>'),
 }
 
@@ -79,9 +84,41 @@ const visuals = {
     <div class="video-frame vi">${video('hellotext-shopping.mp4', 'Maria asks the Crocs store on WhatsApp for clogs in cool colors, gets options, and buys a pair', 1.8, 12.4)}</div>
     ${anchor('bubble', 640, 560, 200, 110)}`,
 
-  night: () => `
-    <div class="video-frame vi">${video('hellotext-shopping.mp4', 'At 1:47 in the morning a sneaker store sends a message, and the customer adds a product to the cart', 22, 31)}</div>
-    ${anchor('dot', 770, 26, 100)}`,
+  // Real Playbooks example: Rachel leaves her cart, the AI Cart Saver notices, sends a personal
+  // WhatsApp message, and she comes back to buy. Clients strip and product come from Hellotext.
+  hellotext: () => `
+    <img class="ht-logo vi" src="${asset('brand/hellotext-logo.png')}" alt="Hellotext">
+    <span class="pb-pill vi">Playbooks</span>
+    <div class="pb-band vi"></div>
+    <div class="pb-list anim" aria-hidden="true">
+      ${[['sun', 'Sunset Saver', 120], ['eye', 'Navigation Recovery', 192], ['form', 'Website Form', 426], ['flame', 'Subscriber Booster', 498]]
+        .map(([icon, label, y]) => `<span class="pb-option" style="top:${y}px"><i class="icon">${icons[icon]}</i>${label}</span>`)
+        .join('')}
+    </div>
+    <div class="pb-node pb-node--shopper anim">
+      <img src="${asset('brand/rachel-avatar.png')}" alt="">
+      <p><b>Rachel</b><span>left her cart</span></p>
+    </div>
+    <svg class="pb-arrows" viewBox="0 0 900 720" aria-hidden="true">
+      <path class="draw anim" d="M272 340 H318 M307 329 L318 340 L307 351" pathLength="1"/>
+      <path class="draw anim" d="M578 340 H624 M613 329 L624 340 L613 351" pathLength="1"/>
+    </svg>
+    <div class="pb-node pb-node--playbook anim"><i></i><b>AI Cart Saver</b></div>
+    <div class="pb-message anim">
+      <span class="pb-message__app">${icons.whatsapp}WhatsApp</span>
+      <p>Hi Rachel! Your orange clogs are still waiting. Here’s 10% off, today only.</p>
+    </div>
+    <img class="pb-product anim" src="${asset('brand/crocs-clog.png')}" alt="Orange Crocs clogs">
+    <span class="pb-check anim" aria-hidden="true">${icons.check}</span>
+    <span class="pb-spent anim"><i>$</i><small>Spent</small><b>$45 USD</b></span>
+    <p class="clients-label vi">Used by</p>
+    <div class="clients vi">
+      <div class="clients-track">
+        <img src="${asset('brand/hellotext-clients.png')}" alt="Brands that use Hellotext: Pro Champions, LEGO, New Balance, Adee, OXXO, Crocs, and Funkyfish">
+        <img src="${asset('brand/hellotext-clients.png')}" alt="">
+      </div>
+    </div>
+    ${anchor('dot', 348, 308, 64)}`,
 
   building: () => `
     <svg class="team-links vi" viewBox="0 0 900 720" aria-hidden="true">
@@ -158,6 +195,22 @@ const entrances = {
       .from(section.querySelector('.blueprint-label'), { autoAlpha: 0, duration: 0.5 }, 1.2)
   },
 
+  // Playbook flow: shopper, playbook chosen from the list, personal message, purchase.
+  hellotext(timeline, section) {
+    const q = selector => section.querySelector(selector)
+    const arrows = section.querySelectorAll('.pb-arrows .draw')
+    timeline
+      .from(q('.pb-node--shopper'), { autoAlpha: 0, x: -40, duration: 0.6 }, 0.55)
+      .fromTo(arrows[0], { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.4, ease: 'power2.inOut' }, 1.0)
+      .from(q('.pb-list'), { autoAlpha: 0, y: 140, duration: 0.9, ease: 'power3.out' }, 1.0)
+      .from(q('.pb-node--playbook'), { autoAlpha: 0, scale: 0.85, duration: 0.6, ease: 'back.out(1.6)' }, 1.35)
+      .fromTo(arrows[1], { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.4, ease: 'power2.inOut' }, 1.85)
+      .from(q('.pb-message'), { autoAlpha: 0, y: 24, scale: 0.92, transformOrigin: '0% 100%', duration: 0.6 }, 2.1)
+      .from(q('.pb-product'), { autoAlpha: 0, x: 30, duration: 0.6 }, 2.6)
+      .from(q('.pb-spent'), { autoAlpha: 0, y: 16, duration: 0.5 }, 2.85)
+      .from(q('.pb-check'), { autoAlpha: 0, scale: 0.3, duration: 0.5, ease: 'back.out(2.2)' }, 3.0)
+  },
+
   // The blueprint from scene 03 fades away as the real product appears underneath it.
   building(timeline, section) {
     timeline
@@ -186,16 +239,16 @@ export const scenes = [
     notes: 'The easiest way to explain my job is with a comparison. An architect designs a house: where the doors are, where the kitchen is, and how people move inside. I do the same thing, but my “houses” are websites and apps. You can’t touch them, but you use them every day. Like an architect, I start with a plan. Look at this plan: it’s a small message for an online store. Remember it, because you will see it again in a few minutes.',
   },
   {
-    id: 'maria', act: 'hellotext', kicker: '04 · Hellotext · today',
-    title: 'Maria has a question',
-    body: 'She writes to the store on WhatsApp. The answer arrives in seconds.',
-    notes: 'This is where I work today: Hellotext. Let me show you a real example. This is Maria. She wants new clogs, so she writes to the Crocs store on WhatsApp: “Can you help me find great price clogs? And in cool colors!” In a few seconds, she gets an answer with different options. She chooses one and buys it. Hellotext helps online stores answer their customers quickly, with the help of artificial intelligence.',
+    id: 'hellotext', act: 'hellotext', kicker: '04 · Hellotext · today',
+    title: 'Stores sell <em>while they sleep</em>',
+    body: 'Hellotext helps online stores talk with their customers and sell more.',
+    notes: 'This is where I work today: Hellotext. Hellotext helps online stores talk with their customers, on WhatsApp and on their websites. Brands like LEGO, New Balance, OXXO, and Crocs use it. Let me show you an example. Rachel is shopping at the Crocs store. She adds some orange clogs to her cart, but then she leaves without buying. A Hellotext “playbook” is watching. A playbook is like a recipe: when something happens, the store does something. Here, the AI Cart Saver notices the abandoned cart and sends Rachel a personal message on WhatsApp: “Your clogs are still waiting, and here is 10% off.” Rachel comes back and buys them. The store was sleeping, but the playbook was not.',
   },
   {
-    id: 'night', act: 'hellotext', kicker: '05 · Hellotext · today',
-    title: '1:47 in the morning',
-    body: 'The store is closed, but the right message arrives. Stores sell while they sleep.',
-    notes: 'Now look at the time: it’s 1:47 in the morning. The store is closed and everybody is sleeping. But this customer bought new sneakers, so the store sends a useful message: “We have some clothes that go really well with your new sneakers.” The message is not random. It arrives at the right moment, for the right person. That’s why we say: stores sell while they sleep.',
+    id: 'maria', act: 'hellotext', kicker: '05 · Hellotext · today',
+    title: 'Maria has a question',
+    body: 'She writes to the store on WhatsApp. The answer arrives in seconds.',
+    notes: 'Sometimes the store starts the conversation, like with Rachel. Other times, the customer starts it. This is Maria, in a real example. She wants new clogs, so she writes to the Crocs store on WhatsApp: “Can you help me find great price clogs? And in cool colors!” In a few seconds, she gets an answer with different options. She chooses one and buys it. Hellotext helps stores answer quickly, any time, with the help of artificial intelligence.',
   },
   {
     id: 'building', act: 'hellotext', kicker: '06 · My work',
@@ -207,7 +260,7 @@ export const scenes = [
     id: 'people', act: 'bridge', kicker: '07 · People',
     title: 'Technology helps people help people',
     body: 'The AI writes a summary. A person answers. The customer is happy.',
-    notes: 'Here is another real example. Rachel’s shoes arrived in the wrong color, so she wants to return them. The artificial intelligence reads the conversation and writes a short summary. But a person from the store answers her and solves the problem. In the end, the customer is 100% satisfied. Technology doesn’t replace people. It helps people help other people. And people inside a company need the same thing. That brings me to the company where I worked before.',
+    notes: 'Remember Rachel? Her new clogs arrived, but in the wrong color, so she wants to return them. The artificial intelligence reads the conversation and writes a short summary. But a person from the store answers her and solves the problem. In the end, the customer is 100% satisfied. Technology doesn’t replace people. It helps people help other people. And people inside a company need the same thing. That brings me to the company where I worked before.',
   },
   {
     id: 'paper', act: 'rankmi', kicker: '08 · Rankmi · before',
