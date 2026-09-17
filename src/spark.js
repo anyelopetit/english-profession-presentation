@@ -13,47 +13,54 @@ const FLIP_PROPS = [
 
 const SHAPES_WITHOUT_GLYPH = new Set(['route', 'line'])
 
-const BLUE = '40, 135, 255'
-const CORAL = '255, 110, 99'
+// The spark takes the accent color of each act: Anyelo's blue, Hellotext's orange, Rankmi's coral
+// (Rankmi also adds its pink-to-yellow gradient through CSS, see .spark[data-tone='rankmi']).
+const TONES = {
+  anyelo: '40, 135, 255',
+  hellotext: '255, 85, 0',
+  bridge: '255, 85, 0',
+  rankmi: '255, 93, 44',
+}
 const NO_SHADOW = 'rgba(0, 0, 0, 0) 0px 0px 0px 0px'
 
 // Every shape sets every tweened property with the same units and single-value radii
 // (computed styles collapse "r r" to "r"), so Flip can interpolate between any two shapes.
-function shapeStyle(shape, width, height) {
+function shapeStyle(shape, tone, width, height) {
+  const ACCENT = TONES[tone] || TONES.anyelo
   const round = `${Math.min(width, height) / 2}px`
   const style = {
-    backgroundColor: `rgba(${BLUE}, 1)`,
-    boxShadow: `rgba(${BLUE}, 0.55) 0px 0px 48px 6px`,
+    backgroundColor: `rgba(${ACCENT}, 1)`,
+    boxShadow: `rgba(${ACCENT}, 0.55) 0px 0px 48px 6px`,
     fontSize: Math.round(Math.min(width, height) * 0.5),
     borderTopLeftRadius: round, borderTopRightRadius: round, borderBottomLeftRadius: round, borderBottomRightRadius: round,
     borderTopWidth: 0, borderRightWidth: 0, borderBottomWidth: 0, borderLeftWidth: 0,
-    borderTopColor: `rgba(${BLUE}, 0)`, borderRightColor: `rgba(${BLUE}, 0)`, borderBottomColor: `rgba(${BLUE}, 0)`, borderLeftColor: `rgba(${BLUE}, 0)`,
+    borderTopColor: `rgba(${ACCENT}, 0)`, borderRightColor: `rgba(${ACCENT}, 0)`, borderBottomColor: `rgba(${ACCENT}, 0)`, borderLeftColor: `rgba(${ACCENT}, 0)`,
   }
   if (shape === 'core') {
-    Object.assign(style, { backgroundColor: `rgba(${CORAL}, 1)`, boxShadow: `rgba(${CORAL}, 0.45) 0px 0px 56px 8px` })
+    Object.assign(style, { boxShadow: `rgba(${ACCENT}, 0.45) 0px 0px 64px 10px` })
   }
   if (shape === 'final') {
-    Object.assign(style, { boxShadow: `rgba(${BLUE}, 0.6) 0px 0px 140px 36px` })
+    Object.assign(style, { boxShadow: `rgba(${ACCENT}, 0.6) 0px 0px 140px 36px` })
   }
   if (shape === 'bubble') {
     Object.assign(style, {
-      boxShadow: `rgba(${BLUE}, 0.35) 0px 24px 48px 0px`,
+      boxShadow: `rgba(${ACCENT}, 0.35) 0px 24px 48px 0px`,
       fontSize: Math.round(height * 0.45),
       borderTopLeftRadius: '44px', borderTopRightRadius: '44px', borderBottomRightRadius: '44px', borderBottomLeftRadius: '12px',
     })
   }
   if (shape === 'route') {
     Object.assign(style, {
-      backgroundColor: `rgba(${BLUE}, 0)`, boxShadow: NO_SHADOW,
+      backgroundColor: `rgba(${ACCENT}, 0)`, boxShadow: NO_SHADOW,
       borderTopWidth: 5, borderRightWidth: 5, borderBottomWidth: 5, borderLeftWidth: 5,
-      borderTopColor: `rgba(${BLUE}, 1)`, borderRightColor: `rgba(${BLUE}, 1)`, borderLeftColor: `rgba(${BLUE}, 1)`,
+      borderTopColor: `rgba(${ACCENT}, 1)`, borderRightColor: `rgba(${ACCENT}, 1)`, borderLeftColor: `rgba(${ACCENT}, 1)`,
     })
   }
   if (shape === 'line') {
     Object.assign(style, {
-      backgroundColor: `rgba(${BLUE}, 0)`, boxShadow: NO_SHADOW,
+      backgroundColor: `rgba(${ACCENT}, 0)`, boxShadow: NO_SHADOW,
       borderTopLeftRadius: '0px', borderTopRightRadius: '0px', borderBottomLeftRadius: '0px', borderBottomRightRadius: '0px',
-      borderTopWidth: height, borderTopColor: `rgba(${BLUE}, 1)`,
+      borderTopWidth: height, borderTopColor: `rgba(${ACCENT}, 1)`,
     })
   }
   return style
@@ -86,8 +93,10 @@ export function createSpark(container) {
   function applyAnchor(anchor) {
     const box = measure(anchor)
     const shape = anchor.dataset.shape
+    const tone = anchor.closest('[data-act]')?.dataset.act || 'anyelo'
     el.dataset.shape = shape
-    gsap.set(el, { ...box, x: 0, y: 0, scale: 1, rotation: 0, ...shapeStyle(shape, box.width, box.height) })
+    el.dataset.tone = tone
+    gsap.set(el, { ...box, x: 0, y: 0, scale: 1, rotation: 0, ...shapeStyle(shape, tone, box.width, box.height) })
     return shape
   }
 

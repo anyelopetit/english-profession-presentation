@@ -8,12 +8,11 @@ import { createSpark } from './spark.js'
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 const pad = n => String(n).padStart(2, '0')
 
-const background = theme =>
-  theme === 'dark' ? `data-background-gradient="${backgrounds.dark}"` : `data-background-color="${backgrounds[theme]}"`
+const background = act => `data-background-gradient="${backgrounds[act]}"`
 
 const sectionMarkup = scene => `
-  <section data-scene="${scene.id}" data-theme="${scene.theme}" ${background(scene.theme)}>
-    <div class="scene scene--${scene.id}">
+  <section data-scene="${scene.id}" data-act="${scene.act}" ${background(scene.act)}>
+    <div class="scene scene--${scene.id} act-${scene.act}">
       <div class="copy">
         <p class="kicker">${scene.kicker}</p>
         <h1>${scene.title}</h1>
@@ -84,7 +83,19 @@ function render(section) {
   const index = deck.getIndices(section).h
   counterEl.textContent = `${pad(index + 1)} / ${pad(scenes.length)}`
   notesText.textContent = scenes[index].notes
-  document.body.dataset.theme = section.dataset.theme
+  document.body.dataset.act = section.dataset.act
+}
+
+// Only the scene on stage plays its product video; each visit starts from the beginning.
+function syncVideos(section) {
+  for (const video of document.querySelectorAll('.reveal video')) {
+    if (section.contains(video) && !deck.isOverview() && !reducedMotion.matches) {
+      video.currentTime = 0
+      video.play().catch(() => {})
+    } else {
+      video.pause()
+    }
+  }
 }
 
 const copyItems = section => section.querySelectorAll('.copy > *')
@@ -93,6 +104,7 @@ const visualItems = section => section.querySelectorAll('.visual, .visual .vi')
 function enterScene(section, { flip }) {
   activeTimeline?.kill()
   render(section)
+  syncVideos(section)
   // A scene may have been left mid-animation; start its entrance from a clean state.
   gsap.set([...copyItems(section), ...visualItems(section)], { clearProps: 'opacity,visibility,transform' })
 
